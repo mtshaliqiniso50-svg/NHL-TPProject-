@@ -26,15 +26,18 @@ st.set_page_config(page_title="🏥 NHI in SA — Dashboard", page_icon="🏥", 
 # --------------------
 @st.cache_data
 def read_csv(file):
-    return pd.read_csv(file)
+    df = pd.read_csv(file)
+    # Normalize column names
+    df.columns = df.columns.str.strip().str.lower()
+    return df
 
 def kpi_card(col, label, value):
     col.metric(label, value)
 
 def safe_parse_dates(df, date_cols=("date","appointment_date","visit_date","created_at")):
     for c in date_cols:
-        if c in df.columns:
-            df[c] = pd.to_datetime(df[c], errors="coerce")
+        if c.lower() in df.columns:
+            df[c.lower()] = pd.to_datetime(df[c.lower()], errors="coerce")
     return df
 
 def build_sample_data(n_patients=500, seed=42):
@@ -79,6 +82,12 @@ def build_sample_data(n_patients=500, seed=42):
     billing = merged[["appointment_id"]].copy()
     billing["amount"] = amounts.round(2)
 
+    # normalize column names
+    patients.columns = patients.columns.str.lower()
+    appointments.columns = appointments.columns.str.lower()
+    doctors.columns = doctors.columns.str.lower()
+    billing.columns = billing.columns.str.lower()
+
     return patients, appointments, billing, doctors
 
 def merge_tables(patients, appointments, billing, doctors):
@@ -89,7 +98,7 @@ def merge_tables(patients, appointments, billing, doctors):
     return df
 
 # --------------------
-# Sidebar — Data Input
+# Sidebar
 # --------------------
 st.sidebar.title("📥 Data Input")
 st.sidebar.caption("Upload your 4 CSV tables or use synthetic sample")
@@ -127,20 +136,37 @@ explore_tab, model_tab = st.tabs(["📊 Explore", "🤖 Model"])
 with explore_tab:
     st.subheader("Data Overview")
     c1, c2, c3 = st.columns(3)
-    kpi_card(c1, "Patients", df['patient_id'].nunique())
-    kpi_card(c2, "Visits", df['appointment_id'].nunique())
-    kpi_card(c3, "Total Spend (R)", round(df['amount'].sum(),2))
+    if "patient_id" in df.columns:
+        kpi_card(c1, "Patients", df['patient_id'].nunique())
+    else:
+        kpi_card(c1, "Patients", "N/A")
+
+    if "appointment_id" in df.columns:
+        kpi_card(c2, "Visits", df['appointment_id'].nunique())
+    else:
+        kpi_card(c2, "Visits", "N/A")
+
+    if "amount" in df.columns:
+        kpi_card(c3, "Total Spend (R)", round(df['amount'].sum(),2))
+    else:
+        kpi_card(c3, "Total Spend (R)", "N/A")
 
     st.markdown("#### Visits by Province")
-    by_prov = df.groupby("province")["appointment_id"].nunique().reset_index(name="visits")
-    fig1 = px.bar(by_prov, x="province", y="visits")
-    st.plotly_chart(fig1, use_container_width=True)
+    if "province" in df.columns and "appointment_id" in df.columns:
+        by_prov = df.groupby("province")["appointment_id"].nunique().reset_index(name="visits")
+        fig1 = px.bar(by_prov, x="province", y="visits", title="Visits by Province")
+        st.plotly_chart(fig1, use_container_width=True)
+    else:
+        st.warning("Cannot plot Visits by Province — missing columns.")
 
     st.markdown("#### Monthly Visit Trend")
-    df["year_month"] = df["appointment_date"].dt.to_period("M").astype(str)
-    trend = df.groupby("year_month")["appointment_id"].nunique().reset_index(name="visits")
-    fig2 = px.line(trend, x="year_month", y="visits")
-    st.plotly_chart(fig2, use_container_width=True)
+    if "appointment_date" in df.columns and "appointment_id" in df.columns:
+        df["year_month"] = df["appointment_date"].dt.to_period("M").astype(str)
+        trend = df.groupby("year_month")["appointment_id"].nunique().reset_index(name="visits")
+        fig2 = px.line(trend, x="year_month", y="visits", title="Monthly Visits")
+        st.plotly_chart(fig2, use_container_width=True)
+    else:
+        st.warning("Cannot plot Monthly Visit Trend — missing columns.")
 
     st.markdown("#### Data Preview")
     st.dataframe(df.head(50))
@@ -152,22 +178,37 @@ with model_tab:
     st.subheader("ML Model & Prediction")
 
     # Load model if exists
-    if os.path.exists(linear_regression_model.pkl):
-        pipe = joblib.load(linear_regression_model.pkl)
-        st.success(f"Loaded model from {linear_regression_model.pkl}")
+    if os.path.exists(model_file):
+        try:
+            pipe = joblib.load(model_file)
+            st.success(f"Loaded model from {model_file}")
+        except Exception as e:
+            st.error(f"Failed to load model: {e}")
+            pipe = None
     else:
         pipe = None
         st.info("Train a model first.")
 
-    st.markdown("#### Quick Prediction")
+    st.markdown("#### Quick Single Prediction")
     if pipe:
         input_data = {}
-        for col in pipe.named_steps['prep'].transformers_[0][2]:  # numeric
-            input_data[col] = st.number_input(col, value=0.0)
-        for col in pipe.named_steps['prep'].transformers_[1][2]:  # categorical
-            input_data[col] = st.selectbox(col, ["Unknown"])
+        # numeric features
+        num_cols = pipe.named_steps['prep'].transformers_[0][2]
+        cat_cols = pipe.named_steps['prep'].transformers_[1][2]
 
-        if st.button("Predict"):
+        with st.form("single_pred_form"):
+            for col in num_cols:
+                input_data[col] = st.number_input(col, value=0.0)
+            for col in cat_cols:
+                input_data[col] = st.selectbox(col, ["Unknown"])
+            submitted = st.form_submit_button("Predict")
+
+        if submitted:
             row = pd.DataFrame([input_data])
-            pred = pipe.predict(row)[0]
-            st.success(f"Prediction: {pred}")
+            try:
+                pred = pipe.predict(row)[0]
+                st.success(f"Prediction: {pred}")
+            except Exception as e:
+                st.error(f"Prediction failed: {e}")
+    else:
+        st.info("No model loaded. Train a model first.")
