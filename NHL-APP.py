@@ -3,6 +3,7 @@ import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 import seaborn as sns
+import pickle as pkl
 import plotly.express as px
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import OneHotEncoder, StandardScaler
@@ -42,7 +43,7 @@ def safe_parse_dates(df, date_cols=("date","appointment_date","visit_date","crea
 
 def build_sample_data(n_patients=500, seed=42):
     rng = np.random.default_rng(seed)
-    provinces = ["Gauteng","KwaZulu-Natal","Western Cape","Eastern Cape","Limpopo","Mpumalanga","North West","Free State","Northern Cape"]
+    #provinces = ["Gauteng","KwaZulu-Natal","Western Cape","Eastern Cape","Limpopo","Mpumalanga","North West","Free State","Northern Cape"]
     sexes = ["Male","Female"]
     specialties = ["GP","Pediatrics","Cardiology","Orthopedics","OBGYN"]
     facility_types = ["Clinic","District Hospital","Regional Hospital","Private Hospital"]
@@ -176,12 +177,11 @@ with explore_tab:
 # --------------------
 with model_tab:
     st.subheader("ML Model & Prediction")
-
-    # Load model if exists
-    if os.path.exists(random_forest_model.pkl):
+  
+    if os.path.exists(model.pkl):
         try:
-            pipe = joblib.load(random_forest_model.pkl)
-            st.success(f"Loaded model from {random_forest_model.pkl}")
+            pipe = joblib.load(model.pkl)
+            st.success(f"Loaded model from {model.pkl}")
         except Exception as e:
             st.error(f"Failed to load model: {e}")
             pipe = None
