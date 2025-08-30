@@ -52,7 +52,7 @@ def build_sample_data(n_patients=500, seed=42):
         "patient_id": np.arange(1, n_patients+1),
         "age": rng.integers(0, 90, size=n_patients),
         "sex": rng.choice(sexes, size=n_patients),
-        "province": rng.choice(provinces, size=n_patients),
+        #"province": rng.choice(provinces, size=n_patients),
         "income_bracket": rng.choice(["Low","Middle","High"], size=n_patients, p=[0.55, 0.35, 0.10]),
     })
 
@@ -61,7 +61,7 @@ def build_sample_data(n_patients=500, seed=42):
         "doctor_id": np.arange(1, n_docs+1),
         "specialty": rng.choice(specialties, size=n_docs),
         "facility_type": rng.choice(facility_types, size=n_docs),
-        "province": rng.choice(provinces, size=n_docs),
+       # "province": rng.choice(provinces, size=n_docs),
     })
 
     n_appts = n_patients * 3
