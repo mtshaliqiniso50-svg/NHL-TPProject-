@@ -3,7 +3,6 @@ import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 import seaborn as sns
-import pickle 
 import plotly.express as px
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import OneHotEncoder, StandardScaler
@@ -178,10 +177,10 @@ with explore_tab:
 with model_tab:
     st.subheader("ML Model & Prediction")
   
-    if os.path.exists(model.pkl):
+    if os.path.exists(model_file):
         try:
-            pipe = joblib.load(model.pkl)
-            st.success(f"Loaded model from {model.pkl}")
+            pipe = joblib.load(model_file)
+            st.success(f"Loaded model from {model_file}")
         except Exception as e:
             st.error(f"Failed to load model: {e}")
             pipe = None
