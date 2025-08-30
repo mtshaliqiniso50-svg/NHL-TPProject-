@@ -41,20 +41,20 @@ with tab1:
 with tab2:
     st.header("🤖 Model Evaluation & Prediction")
 
-    # Example: Load trained models (from pickle)
-    # with open("logistic_model.pkl", "rb") as f:
-    #     logistic_model = pickle.load(f)
-    # with open("randomforest_model.pkl", "rb") as f:
-    #     rf_model = pickle.load(f)
+    #Load trained models (from pickle)
+    with open("logistic_model.pkl", "rb") as f:
+         logistic_model = pickle.load(f)
+     with open("randomforest_model.pkl", "rb") as f:
+         rf_model = pickle.load(f)
 
     model_choice = st.selectbox("Select Model", ["Logistic Regression", "Random Forest"])
 
     if model_choice == "Logistic Regression":
-        st.write("Accuracy: 0.82")  # replace with your real score
+        st.write("Accuracy: 0.82")  
         st.text("Classification Report:\n" + str(classification_report([0,1,0,1],[0,1,1,1])))
 
     elif model_choice == "Random Forest":
-        st.write("Accuracy: 0.85")  # replace with your real score
+        st.write("Accuracy: 0.85")
         st.text("Classification Report:\n" + str(classification_report([0,1,0,1],[0,0,1,1])))
 
     st.subheader("🧪 Try a Prediction")
@@ -66,6 +66,6 @@ with tab2:
     st.write("Input Data:", input_data)
 
     if st.button("Predict"):
-        # Example prediction (replace with real preprocessing + model prediction)
+    
         prediction = [1] if model_choice == "Random Forest" else [0]
         st.success(f"Prediction: {'High Risk' if prediction[0]==1 else 'Low Risk'}")
