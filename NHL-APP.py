@@ -2,7 +2,6 @@ import streamlit as st
 import pandas as pd
 import streamlit as st
 import pickle
-import pandas as pd
 
 # Load models once at startup
 model_file = [
