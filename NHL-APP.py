@@ -5,14 +5,11 @@ import pickle
 import pandas as pd
 
 # Load models once at startup
-model_files = [
-    "baseline_model.pkl",
-    "linear_regression_model.pkl",
-    "random_forest_model.pkl",
-    "gradient_boosting_model.pkl"
+model_file = [
+    "model.pkl"
 ]
 models = {}
-for filename in model_files:
+for filename in model_file:
     with open(filename, "rb") as f:
         models[filename] = pickle.load(f)
 st.set_page_config(page_title="Healthcare ML Dashboard", layout="wide")
