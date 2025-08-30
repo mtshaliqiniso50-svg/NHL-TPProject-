@@ -50,16 +50,6 @@ reg_results_df = pd.DataFrame(reg_results, columns=["Model", "MAE", "RMSE", "R²
 print("=== Regression Results ===")
 print(reg_results_df)
 
-     
-=== Regression Results ===
-               Model       MAE      RMSE        R²     CV R²
-0           Baseline  1.099375  1.382494 -0.001002 -0.006548
-1  Linear Regression  1.094840  1.292247  0.125420  0.070189
-2      Random Forest  0.825750  1.193446  0.254043  0.402956
-3  Gradient Boosting  0.766692  1.136599  0.323414  0.356723
-This cell saves all trained models to disk using pickle so that you don’t need to retrain them every time. It’s essential for deploying or reusing models efficiently.
-
-
 import pickle
 
 # After training + evaluation, save each trained model
