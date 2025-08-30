@@ -1,1 +1,71 @@
+features = ["appointment_month", "has_private_insurance", "appointments_per_patient"]
 
+# Base features
+X = master_df[features]
+
+# Add categorical features
+X = pd.concat([X, master_df[["age_group", "treatment_type"]]], axis=1)
+
+# One-hot encode
+X = pd.get_dummies(X, columns=["age_group", "treatment_type"], drop_first=True)
+
+# Target for regression
+y = master_df.groupby(["treatment_type", "appointment_month"])["appointment_id"].transform("count")
+
+     
+Regression Models
+
+This cell:
+
+Splits data into train/test sets.
+Defines multiple regression models (baseline + advanced).
+Trains each model and makes predictions.
+Calculates MAE, RMSE, R², and cross-validated R².
+Stores and prints results for comparison.
+
+X_train, X_test, y_train, y_test = train_test_split(
+    X, y, test_size=0.2, random_state=42
+)
+
+reg_models = {
+    "Baseline": DummyRegressor(strategy="mean"),
+    "Linear Regression": LinearRegression(),
+    "Random Forest": RandomForestRegressor(random_state=42),
+    "Gradient Boosting": GradientBoostingRegressor(random_state=42),
+}
+
+reg_results = []
+for name, model in reg_models.items():
+    model.fit(X_train, y_train)
+    preds = model.predict(X_test)
+
+    mae = mean_absolute_error(y_test, preds)
+    rmse = mean_squared_error(y_test, preds) ** 0.5   # manual RMSE
+    r2 = r2_score(y_test, preds)
+    cv = cross_val_score(model, X, y, cv=5, scoring="r2").mean()
+
+    reg_results.append([name, mae, rmse, r2, cv])
+
+reg_results_df = pd.DataFrame(reg_results, columns=["Model", "MAE", "RMSE", "R²", "CV R²"])
+print("=== Regression Results ===")
+print(reg_results_df)
+
+     
+=== Regression Results ===
+               Model       MAE      RMSE        R²     CV R²
+0           Baseline  1.099375  1.382494 -0.001002 -0.006548
+1  Linear Regression  1.094840  1.292247  0.125420  0.070189
+2      Random Forest  0.825750  1.193446  0.254043  0.402956
+3  Gradient Boosting  0.766692  1.136599  0.323414  0.356723
+This cell saves all trained models to disk using pickle so that you don’t need to retrain them every time. It’s essential for deploying or reusing models efficiently.
+
+
+import pickle
+
+# After training + evaluation, save each trained model
+for name, model in reg_models.items():
+    filename = f"{name.replace(' ', '_').lower()}_model.pkl"
+    with open(filename, "wb") as f:
+        pickle.dump(model, f)
+
+print("✅ All models saved as .pkl files")
