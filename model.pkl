@@ -12,17 +12,6 @@ X = pd.get_dummies(X, columns=["age_group", "treatment_type"], drop_first=True)
 # Target for regression
 y = master_df.groupby(["treatment_type", "appointment_month"])["appointment_id"].transform("count")
 
-     
-Regression Models
-
-This cell:
-
-Splits data into train/test sets.
-Defines multiple regression models (baseline + advanced).
-Trains each model and makes predictions.
-Calculates MAE, RMSE, R², and cross-validated R².
-Stores and prints results for comparison.
-
 X_train, X_test, y_train, y_test = train_test_split(
     X, y, test_size=0.2, random_state=42
 )
